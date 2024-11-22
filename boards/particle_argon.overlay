@@ -1,0 +1,30 @@
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+/ {
+	gpio_keys {
+		occupancy_sw: sw {
+			// D8 on the feather interconnect
+			gpios = <&gpio1 3 GPIO_ACTIVE_LOW>;
+			label = "occupancy";
+		};
+
+		vbus_det: vbus {
+			gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
+			label = "vbus";
+		};
+
+		charge_status: chg {
+			gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
+			label = "charge_status";
+		};
+	};
+};
+
+&gpio0 {
+	// power off the esp32
+	esp32-enable {
+		gpio-hog;
+		gpios = <24 GPIO_ACTIVE_HIGH>;
+		output-low;
+	};
+};
