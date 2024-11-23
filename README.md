@@ -18,7 +18,7 @@ Follow the [getting started](https://docs.zephyrproject.org/4.0.0/develop/gettin
 
 Connect the switch between D8 and GND, with a 100K resistor between D8 and 3V3 for pull-up. Connect the 0.1uF capacitor in parallel with the switch for debouncing.
 
-On the host side, you'll need a Bluetooth adapter. RTL8761B based dongles such as the UB500 should be reliable enough for passive scanning. While this device should work out of the box with HomeAssistant, a python script is also provided in case you don't want to use HomeAssistant.
+On the host side, you'll need a Bluetooth adapter. RTL8761B based dongles such as the UB500 should be reliable enough for passive scanning. While this device should work out of the box with HomeAssistant, a python script (`scanner.py`) is also provided in case you don't want to use HomeAssistant.
 
 ### Power
 
