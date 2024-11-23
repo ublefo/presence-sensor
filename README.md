@@ -27,3 +27,8 @@ The Particle Argon was selected because it is still widely available and is desi
 The internal pull-up in the nRF52840 is quite strong, so an external pull-up ressitor is required for optimal battery life. Pull-up for charge termination detection is only enabled when the device is running for the same reason.
 
 With a 100K pull-up for the switch and 3.7V on the battery connector, the board consumes about 750 ~ 950uA when active, and around 82uA on average in system off state. A 2000mAh LiPo cell should be able to keep the device running for a few months.
+
+### Credits
+
+- Battery sampling code: https://github.com/zephyrproject-rtos/zephyr/tree/v4.0.0/samples/boards/nordic/battery/src
+- BTHome parser code: https://github.com/custom-components/ble_monitor/tree/12.19.0
