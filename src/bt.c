@@ -16,6 +16,8 @@ LOG_MODULE_REGISTER(BT, LOG_LEVEL_INF);
 #define IDX_CHRG         9
 #define IDX_OCCUPANCY    11
 
+K_SEM_DEFINE(bt_adv_sem, 0, 1);
+
 #define ADV_PARAM                                                                                  \
 	BT_LE_ADV_PARAM(BT_LE_ADV_OPT_USE_IDENTITY, BT_GAP_ADV_SLOW_INT_MIN,                       \
 			BT_GAP_ADV_SLOW_INT_MAX, NULL)
@@ -24,10 +26,10 @@ static uint8_t service_data[SERVICE_DATA_LEN] = {
 	BT_UUID_16_ENCODE(SERVICE_UUID),
 	0x44, /* BTHome Device Information */
 	0x01, /* battery % */
-	0x64,
+	0x00,
 	0x0c, /* voltage */
-	0x02,
-	0x0C,
+	0x00,
+	0x00,
 	0x16, /* battery charging */
 	0x00,
 	0x23, /* occupancy */
@@ -46,8 +48,6 @@ static void bt_ready(int err)
 		return;
 	}
 
-	LOG_INF("Bluetooth initialized");
-
 	// start advertising
 	err = bt_le_adv_start(ADV_PARAM, ad, ARRAY_SIZE(ad), NULL, 0);
 	if (err) {
@@ -59,12 +59,15 @@ static void bt_ready(int err)
 int advertising_start(void)
 {
 	int rc = 0;
+	// wait until data is ready
+	k_sem_take(&bt_adv_sem, K_FOREVER);
 
 	rc = bt_enable(bt_ready);
 	if (rc) {
 		LOG_ERR("Bluetooth init failed (err %d)", rc);
 	}
 
+	LOG_INF("Bluetooth initialized");
 	return rc;
 }
 
@@ -81,6 +84,9 @@ int advertising_update(int occupancy, int mv, int percentage, int charge_state)
 	service_data[IDX_VOLTAGEL] = (mv) & 0xff;
 	service_data[IDX_CHRG] = charge_state;
 	service_data[IDX_OCCUPANCY] = occupancy;
+
+	// unblock BT init
+	k_sem_give(&bt_adv_sem);
 
 	err = bt_le_adv_update_data(ad, ARRAY_SIZE(ad), NULL, 0);
 	if (err) {

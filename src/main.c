@@ -43,8 +43,8 @@ int main(void)
 
 	LOG_INF("Setup complete");
 
-	advertising_start();
 	sensor_update();
+	advertising_start();
 
 	return 0;
 }
