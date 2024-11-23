@@ -8,6 +8,8 @@ west = "*"
 pyelftools = "*"
 pyocd = "*"
 bleak = "*"
+bthome-ble = "*"
+pycryptodomex = "*"
 
 [dev-packages]
 
