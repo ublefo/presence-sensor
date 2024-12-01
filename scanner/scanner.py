@@ -1,6 +1,7 @@
 import asyncio
+import configparser
+import os
 import logging
-import sys
 import json
 
 from bleak import BleakScanner
@@ -15,10 +16,20 @@ from bthome import parse_bthome
 
 BTHOME_VID = 0xFCD2
 
-logger = logging.getLogger(__name__)
+log_level = os.getenv("LOG_LEVEL", "WARNING")
+log_level = log_level.upper()
+logger = logging.getLogger()
 
-# List of your own MAC addresses
-DEVICES = ["AA:BB:CC:DD:EE:FF"]
+if hasattr(logging, log_level):
+    logger.setLevel(getattr(logging, log_level))
+else:
+    logger.setLevel(logging.WARNING)
+
+config = configparser.ConfigParser()
+config.read("config.ini")
+
+MAC_FILTER_CONTROL = config.getboolean("Main", "filter_mac_address")
+MAC_ADDR_LIST = config.get("Main", "address_list").split(",")
 
 
 def adv_callback(device: BLEDevice, advertisement_data: AdvertisementData):
@@ -26,7 +37,7 @@ def adv_callback(device: BLEDevice, advertisement_data: AdvertisementData):
         logger.info(
             f"{device.address} RSSI: {advertisement_data.rssi}, {advertisement_data}"
         )
-        if device.address in DEVICES:
+        if device.address in MAC_ADDR_LIST or not MAC_FILTER_CONTROL:
             data = b"\x00\x00\x00\x00" + advertisement_data.service_data.get(
                 normalize_uuid_16(BTHOME_VID)
             )
@@ -39,14 +50,17 @@ def adv_callback(device: BLEDevice, advertisement_data: AdvertisementData):
             )
             if sensor_data is not None:
                 data_callback(sensor_data)
+            else:
+                logger.info(
+                    f"Failed to decode data from [{device.address}]: {advertisement_data.local_name}"
+                )
 
 
 def data_callback(sensor_data):
-    logger.info(json.dumps(sensor_data))
-    # do stuff here with the decoded data
+    print(json.dumps(sensor_data))
 
 
-async def main(service_uuids):
+async def main():
     passive_filters = [
         OrPattern(0, AdvertisementDataType.SERVICE_DATA_UUID16, b"\xd2\xfc"),
     ]
@@ -57,6 +71,9 @@ async def main(service_uuids):
         bluez=BlueZScannerArgs(or_patterns=passive_filters),
     )
 
+    logger.info(f"MAC filter {"enabled" if MAC_FILTER_CONTROL else "disabled"}")
+    if MAC_FILTER_CONTROL:
+        logger.info(f"MAC address list: {MAC_ADDR_LIST}")
     await scanner.start()
     event = asyncio.Event()
     await event.wait()  # wait indefinitely
@@ -64,8 +81,6 @@ async def main(service_uuids):
 
 if __name__ == "__main__":
     logging.basicConfig(
-        level=logging.INFO,
         format="%(asctime)-15s %(name)-8s %(levelname)s: %(message)s",
     )
-    service_uuids = sys.argv[1:]
-    asyncio.run(main(service_uuids))
+    asyncio.run(main())
