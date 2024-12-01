@@ -41,18 +41,29 @@ def adv_callback(device: BLEDevice, advertisement_data: AdvertisementData):
             data = b"\x00\x00\x00\x00" + advertisement_data.service_data.get(
                 normalize_uuid_16(BTHOME_VID)
             )
-            parser = BleParser()
+            # convert MAC address string for BTHome parser, which expects a bytes object
+            mac_bytearray = bytes.fromhex(device.address.replace(":", ""))
+            # try to retrieve encryption key from config file
+            encryption_key = None
+            key_str = config.get(
+                "Encryption", device.address.replace(":", "").upper(), fallback=None
+            )
+            if key_str is not None:
+                logger.info(f"Encryption key for {device.address} found")
+                encryption_key = bytes.fromhex(key_str)
+            # create parser with key
+            parser = BleParser(aeskeys={mac_bytearray: encryption_key})
             sensor_data = parse_bthome(
                 parser,
                 data,
                 BTHOME_VID,
-                bytearray.fromhex(device.address.replace(":", "")),
+                mac_bytearray,
             )
             if sensor_data is not None:
                 data_callback(sensor_data)
             else:
                 logger.info(
-                    f"Failed to decode data from [{device.address}]: {advertisement_data.local_name}"
+                    f"Failed to decode data from {device.address} {advertisement_data.local_name}"
                 )
 
 
