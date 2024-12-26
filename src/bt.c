@@ -19,8 +19,8 @@ LOG_MODULE_REGISTER(BT, LOG_LEVEL_INF);
 K_SEM_DEFINE(bt_adv_sem, 0, 1);
 
 #define ADV_PARAM                                                                                  \
-	BT_LE_ADV_PARAM(BT_LE_ADV_OPT_USE_IDENTITY, BT_GAP_ADV_SLOW_INT_MIN,                       \
-			BT_GAP_ADV_SLOW_INT_MAX, NULL)
+	BT_LE_ADV_PARAM(BT_LE_ADV_OPT_USE_IDENTITY, BT_GAP_ADV_FAST_INT_MIN_2,                       \
+			BT_GAP_ADV_FAST_INT_MAX_2, NULL)
 
 static uint8_t service_data[SERVICE_DATA_LEN] = {
 	BT_UUID_16_ENCODE(SERVICE_UUID),
