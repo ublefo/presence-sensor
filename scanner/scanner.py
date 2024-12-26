@@ -7,7 +7,7 @@ import json
 from bleak import BleakScanner
 from bleak.assigned_numbers import AdvertisementDataType
 from bleak.backends.bluezdbus.advertisement_monitor import OrPattern
-from bleak.backends.bluezdbus.scanner import BlueZScannerArgs
+from bleak.backends.bluezdbus.scanner import BlueZScannerArgs, BlueZDiscoveryFilters
 from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
 from bleak.uuids import normalize_uuid_16
@@ -33,7 +33,7 @@ MAC_ADDR_LIST = config.get("Main", "address_list").split(",")
 
 
 def adv_callback(device: BLEDevice, advertisement_data: AdvertisementData):
-    if normalize_uuid_16(BTHOME_VID) in advertisement_data.service_uuids:
+    if advertisement_data.service_data:
         logger.info(
             f"{device.address} RSSI: {advertisement_data.rssi}, {advertisement_data}"
         )
@@ -72,17 +72,18 @@ def data_callback(sensor_data):
 
 
 async def main():
-    passive_filters = [
+    filters = BlueZDiscoveryFilters(Transport="le", DuplicateData=False)
+    patterns = [
         OrPattern(0, AdvertisementDataType.SERVICE_DATA_UUID16, b"\xd2\xfc"),
     ]
 
     scanner = BleakScanner(
         detection_callback=adv_callback,
         scanning_mode="passive",
-        bluez=BlueZScannerArgs(or_patterns=passive_filters),
+        bluez=BlueZScannerArgs(filters=filters, or_patterns=patterns),
     )
 
-    logger.info(f"MAC filter {"enabled" if MAC_FILTER_CONTROL else "disabled"}")
+    logger.info(f"MAC filter {'enabled' if MAC_FILTER_CONTROL else 'disabled'}")
     if MAC_FILTER_CONTROL:
         logger.info(f"MAC address list: {MAC_ADDR_LIST}")
     await scanner.start()
